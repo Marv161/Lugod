@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lugod</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&family=IM+Fell+English+SC&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-black: #000000;
+            --jewel-magenta: #b800e6;
+            --bleach-indigo: #4B0082;
+            --bleach-light: #d0a9f5;
+            --bleach-dark: #9932CC;
+        }
+
+        body {
+            background-color: var(--deep-black);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+            margin: 0;
+            height: 100vh;
+        }
+
+        /* --- Fondo Sideral --- */
+        #star-field {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: black;
+            overflow: hidden;
+        }
+        .star {
+            position: absolute;
+            background: var(--jewel-magenta);
+            border-radius: 50%;
+            opacity: 0.8;
+            box-shadow: 0 0 8px var(--jewel-magenta);
+            animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* --- Estrellas Fugaces --- */
+        .shooting-star {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 0 4px rgba(184, 0, 230, 0.1), 0 0 0 8px rgba(184, 0, 230, 0.1), 0 0 20px rgba(184, 0, 230, 1);
+            animation: shoot 3s linear infinite;
+            opacity: 0;
+            z-index: -1;
+        }
+        .shooting-star::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 100px;
+            height: 1px;
+            background: linear-gradient(90deg, #fff, transparent);
+        }
+        @keyframes shoot {
+            0% { transform: rotate(315deg) translateX(0); opacity: 1; }
+            70% { opacity: 1; }
+            100% { transform: rotate(315deg) translateX(-1000px); opacity: 0; }
+        }
+
+        /* --- Pantalla Intro --- */
+        #intro {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: black;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s ease, visibility 1s;
+        }
+
+        .intro-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .intro-img-styled {
+            width: 150px;
+            height: 150px;
+            border: 2px solid var(--bleach-light);
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 0 30px var(--bleach-indigo);
+            transform: rotate(-2deg);
+        }
+
+        /* Lugo Intro: Morado con Bordes Negros */
+        .lugo-bleach {
+            font-family: 'IM Fell English SC', serif;
+            font-size: 4.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: var(--jewel-magenta);
+            -webkit-text-stroke: 2px #000;
+            animation: bleachGlow 3s linear infinite, bleachRotate 4s ease-in-out infinite alternate;
+            filter: drop-shadow(0 0 20px var(--jewel-magenta));
+            text-shadow: 
+                3px 3px 0px #000,
+                -3px -3px 0px #000,
+                3px -3px 0px #000,
+                -3px 3px 0px #000;
+            margin: 0;
+        }
+
+        @keyframes bleachGlow {
+            0%, 100% { filter: drop-shadow(0 0 15px var(--jewel-magenta)); }
+            50% { filter: drop-shadow(0 0 30px var(--bleach-light)); }
+        }
+        @keyframes bleachRotate {
+            0% { transform: perspective(500px) rotateY(-5deg) rotateX(2deg); }
+            100% { transform: perspective(500px) rotateY(5deg) rotateX(-2deg); }
+        }
+
+        .btn-enter {
+            padding: 12px 60px;
+            background: rgba(75, 0, 130, 0.2);
+            border: 1px solid var(--bleach-light);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(5px);
+        }
+        .btn-enter:hover {
+            background: var(--bleach-indigo);
+            box-shadow: 0 0 30px var(--bleach-light);
+            transform: scale(1.05);
+        }
+
+        /* --- Contenedor Principal con Bordes en Movimiento --- */
+        #main-content {
+            opacity: 0;
+            visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .card-wrapper {
+            position: relative;
+            padding: 3px;
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 750px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+        }
+
+        /* Efecto de borde rotativo (Lógica Kenza) */
+        .card-wrapper::before {
+            content: '';
+            position: absolute;
+            width: 150%;
+            height: 300%;
+            background: conic-gradient(from 0deg, transparent 20%, #000 40%, var(--jewel-magenta) 50%, #000 60%, transparent 80%);
+            animation: rotateWave 4s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes rotateWave {
+            to { transform: rotate(360deg); }
+        }
+
+        .profile-card {
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(15px);
+            border-radius: 18px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            z-index: 1;
+        }
+        .profile-card::-webkit-scrollbar { display: none; }
+
+        .cover-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            mask-image: linear-gradient(to bottom, black 80%, transparent);
+        }
+
+        .avatar-container {
+            margin-top: -60px;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        .avatar-img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid var(--jewel-magenta);
+            box-shadow: 0 0 25px var(--jewel-magenta);
+            object-fit: cover;
+        }
+
+        /* Estados */
+        .status-dot {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid #000;
+            background: #666;
+            z-index: 10;
+        }
+        .status-online { background: #22c55e !important; box-shadow: 0 0 10px #22c55e; }
+        .status-offline { background: #ef4444 !important; }
+
+        /* --- Reproductor --- */
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(10, 0, 20, 0.85);
+            border: 1px solid var(--jewel-magenta);
+            padding: 12px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .player-thumb {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid var(--jewel-magenta);
+            object-fit: cover;
+        }
+        #visualizer {
+            width: 100px;
+            height: 35px;
+        }
+
+        /* --- Amigos --- */
+        .friend-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        .friend-circle {
+            width: 85px; 
+            height: 85px;
+            border-radius: 50%;
+            border: 2px solid var(--jewel-magenta);
+            overflow: hidden;
+            position: relative;
+            transition: 0.3s;
+            background: #111;
+            z-index: 1;
+        }
+        .friend-circle:hover { transform: scale(1.1); border-color: white; box-shadow: 0 0 15px var(--jewel-magenta); }
+        
+        .friend-status {
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 3px solid #000;
+            background: #444;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="star-field"></div>
+
+    <!-- Intro Screen -->
+    <div id="intro">
+        <div class="intro-container">
+            <img src="https://xatimg.com/image/hvCfDbJWaOUm.jpg" alt="Intro" class="intro-img-styled">
+            <h1 class="lugo-bleach">Lugo</h1>
+        </div>
+        <button class="btn-enter" onclick="startExperience()">Entrar</button>
+    </div>
+
+    <!-- Main Content con Borde Kenza -->
+    <div id="main-content">
+        <div class="card-wrapper">
+            <div class="profile-card">
+                <img src="https://xatimg.com/image/RdEI8uJwGRsT.gif" class="cover-img">
+                
+                <div class="avatar-container">
+                    <div class="relative">
+                        <img src="https://xatimg.com/image/MKaJPq4bnnAW.jpg" class="avatar-img">
+                        <div id="status-main" class="status-dot"></div>
+                    </div>
+                </div>
+
+                <div class="text-center p-6">
+                    <h2 class="text-4xl font-black mb-2 tracking-tighter" style="color: var(--bleach-light); text-shadow: 0 0 10px var(--bleach-indigo);">LUGO</h2>
+                    <p class="text-gray-300 text-sm italic font-medium px-4 mb-8">
+                        "La razón existe para aquellos que no pueden vivir sin aferrarse a ella"
+                    </p>
+
+                    <div class="border-t border-purple-900/30 pt-6">
+                        <h3 class="text-[10px] uppercase tracking-[0.4em] text-purple-400 font-bold mb-6">Conexiones</h3>
+                        <div class="flex flex-wrap justify-center gap-10">
+                            
+                            <!-- Amigo: Caro -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/Caro" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/13749fZqdyg6.jpg" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-Caro" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">CARO</span>
+                            </div>
+
+                            <!-- Amigo: Marvin -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/Marv" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/w8s5i79HHVB6.png" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-Marv" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">MARVIN</span>
+                            </div>
+
+                            <!-- Amigo: Toxic -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/Intoxicada" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/2QQ2NNEhGFVZ.gif" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-Intoxicada" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">TOXIC</span>
+                            </div>
+
+                            <!-- Amigo: Sivi -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/iDaviiessx" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/yqhSXDxSu9YL.jpg" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-iDaviiessx" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">SIVI</span>
+                            </div>
+
+                            <!-- Amigo: Paimon -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/Paimon" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/Nv99kbZqVgL6.jpg" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-Paimon" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">PAIMON</span>
+                            </div>
+
+                            <!-- Amigo: Yatzi -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/Yatzi" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/Q5OYxL2dDUBl.jpg" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-Yatzi" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">YATZI</span>
+                            </div>
+
+                            <!-- Amigo: Kire -->
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="friend-wrapper">
+                                    <a href="https://xat.me/KireSproex" target="_blank" class="friend-circle block">
+                                        <img src="https://xatimg.com/image/I4CyC1nKWTI9.jpg" class="w-full h-full object-cover">
+                                    </a>
+                                    <div id="status-KireSproex" class="friend-status"></div>
+                                </div>
+                                <span class="text-[10px] font-bold text-gray-400">KIRE</span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Music Player -->
+    <div id="player" class="music-player" style="display:none">
+        <img src="https://xatimg.com/image/JvT4iHyUZ9AG.png" class="player-thumb">
+        <div>
+            <div class="text-[10px] text-purple-400 font-bold uppercase">Sternritter Theme</div>
+            <canvas id="visualizer"></canvas>
+        </div>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="audio" src="musica.mp3" loop crossorigin="anonymous"></audio>
+
+    <script>
+        // API Status Logic
+        async function checkStatus(user, elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            try {
+                const r = await fetch(`https://illuxat.com/api/online/${user}`);
+                if (!r.ok) throw new Error();
+                const d = await r.json();
+                const isOnline = d.data?.status?.toLowerCase() === 'online';
+                el.className = el.className.replace(/status-(online|offline)/g, '') + 
+                               (isOnline ? ' status-online' : ' status-offline');
+            } catch(e) { 
+                el.classList.add('status-offline'); 
+            }
+        }
+
+        function updateAllStatuses() {
+            checkStatus('iLuguinhoo', 'status-main');
+            checkStatus('Caro', 'status-Caro');
+            checkStatus('Marv', 'status-Marv');
+            checkStatus('Intoxicada', 'status-Intoxicada');
+            checkStatus('iDaviiessx', 'status-iDaviiessx');
+            checkStatus('Paimon', 'status-Paimon');
+            checkStatus('Yatzi', 'status-Yatzi');
+            checkStatus('KireSproex', 'status-KireSproex');
+        }
+
+        // Generador de Estrellas y Estrellas Fugaces
+        function createStars() {
+            const field = document.getElementById('star-field');
+            for (let i = 0; i < 120; i++) {
+                const s = document.createElement('div');
+                s.className = 'star';
+                s.style.left = Math.random() * 100 + '%';
+                s.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 3 + 1;
+                s.style.width = size + 'px';
+                s.style.height = size + 'px';
+                s.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+                field.appendChild(s);
+            }
+        }
+
+        function createShootingStars() {
+            const field = document.getElementById('star-field');
+            setInterval(() => {
+                const s = document.createElement('div');
+                s.className = 'shooting-star';
+                s.style.top = Math.random() * 50 + '%';
+                s.style.left = Math.random() * 100 + '%';
+                const delay = Math.random() * 2;
+                s.style.animationDelay = delay + 's';
+                field.appendChild(s);
+                setTimeout(() => s.remove(), 4000);
+            }, 2000);
+        }
+
+        let audioCtx, analyser, dataArray, canvas, ctx;
+        function initVisualizer() {
+            const audio = document.getElementById('audio');
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const source = audioCtx.createMediaElementSource(audio);
+                analyser = audioCtx.createAnalyser();
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                analyser.fftSize = 64;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                canvas = document.getElementById('visualizer');
+                ctx = canvas.getContext('2d');
+                draw();
+            } catch(e) { console.error("Visualizer failed", e); }
+        }
+
+        function draw() {
+            requestAnimationFrame(draw);
+            if (!analyser) return;
+            analyser.getByteFrequencyData(dataArray);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const barWidth = (canvas.width / dataArray.length) * 2.5;
+            let x = 0;
+            for(let i = 0; i < dataArray.length; i++) {
+                const barHeight = dataArray[i] / 5;
+                ctx.fillStyle = `rgb(184, 0, 230)`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        function startExperience() {
+            const intro = document.getElementById('intro');
+            const main = document.getElementById('main-content');
+            const audio = document.getElementById('audio');
+            const player = document.getElementById('player');
+
+            audio.play().then(() => {
+                initVisualizer();
+            }).catch(e => console.log("Audio play blocked"));
+
+            intro.style.opacity = '0';
+            setTimeout(() => {
+                intro.style.visibility = 'hidden';
+                main.style.visibility = 'visible';
+                main.style.opacity = '1';
+                player.style.display = 'flex';
+                updateAllStatuses();
+            }, 1000);
+        }
+
+        window.onload = () => {
+            createStars();
+            createShootingStars();
+            setInterval(updateAllStatuses, 60000);
+        };
+    </script>
+</body>
+</html>
